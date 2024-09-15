@@ -1,5 +1,4 @@
 $(document).ready(function () {
-//    loadEmployees();
 
     let currentPage = 0; // Start from page 0
         let pageSize = $('#pageSize').val(); // Default page size from the dropdown
@@ -49,18 +48,7 @@ $(document).ready(function () {
                 employeeTable.empty(); // Clear previous content
                 // Assuming 'data' contains an array of employee objects and pagination info
                 data.content.forEach(function (employee) {
-                    var row = `<tr>
-//                        <td><img src="data:image/jpeg;base64,${employee.photo}" alt="Photo" style="width: 50px; height: 50px;"></td>
-                        <td>${employee.fullName}</td>
-                        <td>${employee.email}</td>
-                        <td>${employee.mobile}</td>
-                        <td>${employee.dateOfBirth}</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary edit-btn" data-id="${employee.id}">Edit</button>
-                            <button class="btn btn-sm btn-danger delete-btn" data-id="${employee.id}">Delete</button>
-                        </td>
-                    </tr>`;
-                    employeeTable.append(row);
+                    loadTheEmployees(employee, employeeTable);
                 });
 
                 // Handle pagination UI here
@@ -74,6 +62,22 @@ $(document).ready(function () {
                 alert('Failed to fetch employee data.');
             }
         });
+    }
+
+    // load employee
+    function loadTheEmployees(employee, employeeTable) {
+        var row = `<tr>
+            <td><img src="${employee.photo != null ? employee.photo : '/media/default-profile-pic.png'}" alt="Photo" style="width: 50px; height: 50px;"></td>
+            <td>${employee.fullName}</td>
+            <td>${employee.email}</td>
+            <td>${employee.mobile}</td>
+            <td>${employee.dateOfBirth}</td>
+            <td>
+                <button class="btn btn-sm btn-primary edit-btn" data-id="${employee.id}">Edit</button>
+                <button class="btn btn-sm btn-danger delete-btn" data-id="${employee.id}">Delete</button>
+            </td>
+        </tr>`;
+        employeeTable.append(row);
     }
 
     // Function to handle employee deletion with confirmation
@@ -191,19 +195,7 @@ $(document).ready(function () {
                 employeeTable.empty(); // Clear previous content
                 // Assuming data is an array of employee objects
                 data.forEach(function (employee) {
-                    console.log(employee);
-                    var row = `<tr>
-//                        <td><img src="data:image/jpeg;base64,${employee.photo}" alt="Photo" style="width: 50px; height: 50px;"></td>
-                            <td>${employee.fullName}</td>
-                            <td>${employee.email}</td>
-                            <td>${employee.mobile}</td>
-                            <td>${employee.dateOfBirth}</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary edit-btn" data-id="${employee.id}">Edit</button>
-                                <button class="btn btn-sm btn-danger delete-btn" data-id="${employee.id}">Delete</button>
-                            </td>
-                        </tr>`;
-                    employeeTable.append(row);
+                    loadTheEmployees(employee, employeeTable);
                 });
             },
             error: function (xhr, status, error) {

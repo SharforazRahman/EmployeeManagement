@@ -1,9 +1,9 @@
 package com.wifi_solution.EmployeeManagement.controller;
 
-import com.wifi_solution.EmployeeManagement.helper.EmployeeHelper;
 import com.wifi_solution.EmployeeManagement.model.Employee;
 import com.wifi_solution.EmployeeManagement.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/employee")
@@ -19,8 +20,6 @@ public class EmployeeController {
 
     @Autowired
     private EmployeeService employeeService;
-    @Autowired
-    private EmployeeHelper employeeHelper;
 
     @GetMapping("/search")
     public ResponseEntity<List<Employee>> searchEmployee(
@@ -37,6 +36,9 @@ public class EmployeeController {
         return employeeService.getEmployeeById(id);
     }
 
+    @Value("${file.storage.path}")
+    private String storagePath;
+
     @PostMapping
     public ResponseEntity<String> addEmployee(
             @RequestParam("firstName") String firstName,
@@ -51,10 +53,12 @@ public class EmployeeController {
         employee.setEmail(email);
         employee.setMobile(mobile);
         employee.setDateOfBirth(LocalDate.parse(dateOfBirth));
-
         try {
             if (!photo.isEmpty()) {
-                // TO DO
+                // Upload the profile picture to Cloudinary
+                Map uploadResult = employeeService.uploadFile(photo);
+                String profilePictureUrl = (String) uploadResult.get("url");
+                employee.setPhoto(profilePictureUrl);
             }
             employeeService.saveEmployee(employee);
             return new ResponseEntity<>("Employee added successfully", HttpStatus.CREATED);
