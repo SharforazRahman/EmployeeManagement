@@ -10,9 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/employee")
@@ -47,31 +45,19 @@ public class EmployeeController {
             @RequestParam("mobile") String mobile,
             @RequestParam("dateOfBirth") String dateOfBirth,
             @RequestParam("photo") MultipartFile photo) {
-
-        Employee employee = new Employee();
-        employee.setFullName(firstName + " " + lastName);
-        employee.setEmail(email);
-        employee.setMobile(mobile);
-        employee.setDateOfBirth(LocalDate.parse(dateOfBirth));
-        try {
-            if (!photo.isEmpty()) {
-                // Upload the profile picture to Cloudinary
-                Map uploadResult = employeeService.uploadFile(photo);
-                String profilePictureUrl = (String) uploadResult.get("url");
-                employee.setPhoto(profilePictureUrl);
-            }
-            employeeService.saveEmployee(employee);
-            return new ResponseEntity<>("Employee added successfully", HttpStatus.CREATED);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("Error saving employee", HttpStatus.BAD_REQUEST);
-        }
+        employeeService.saveEmployee(new Employee(), firstName, lastName, email, mobile, dateOfBirth, photo);
+        return new ResponseEntity<>("Employee added successfully", HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Employee> updateEmployee(@PathVariable Long id,
-                                                   @RequestBody Employee employeeDetails) {
-        Employee updatedEmployee = employeeService.updateEmployee(id, employeeDetails);
+                                                   @RequestParam("fullName") String fullName,
+                                                   @RequestParam("email") String email,
+                                                   @RequestParam("mobile") String mobile,
+                                                   @RequestParam("dateOfBirth") String dateOfBirth,
+                                                   @RequestParam("photo") MultipartFile photo) {
+        Employee updatedEmployee = employeeService.updateEmployee(id, fullName,
+                email, mobile, dateOfBirth, photo);
         return ResponseEntity.ok(updatedEmployee);
     }
 

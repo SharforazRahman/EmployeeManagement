@@ -93,6 +93,7 @@ $(document).ready(function () {
                 $('#editEmail').val(employee.email);
                 $('#editMobile').val(employee.mobile);
                 $('#editDOB').val(employee.dateOfBirth);
+                $('#editPhotoView').attr('src', employee.photo);
 
                 // Show the modal
                 $('#editEmployeeModal').modal('show');
@@ -131,25 +132,44 @@ $(document).ready(function () {
         deleteEmployee(employeeId);
     });
 
+    // Handle file input change to show image preview
+    $('#editPhoto').on('change', function(event) {
+        var file = event.target.files[0];  // Get the selected file
+        if (file) {
+            var reader = new FileReader();  // Create a FileReader object
+            reader.onload = function(e) {
+                // When the file is read, set the src of the image element to the file's data URL
+                $('#editPhotoView').attr('src', e.target.result);
+            };
+            reader.readAsDataURL(file);  // Read the file as a data URL
+        }
+    });
+
     // Handle the edit form submission
     $('#editEmployeeForm').on('submit', function (event) {
         event.preventDefault(); // Prevent default form submission
 
         // Get form data
         var employeeId = $('#editEmployeeId').val();
-        var employeeData = {
-            fullName: $('#editFullName').val(),
-            email: $('#editEmail').val(),
-            mobile: $('#editMobile').val(),
-            dateOfBirth: $('#editDOB').val()
-        };
+
+        var formData = new FormData();
+        formData.append('fullName', $('#editFullName').val());
+        formData.append('email', $('#editEmail').val());
+        formData.append('mobile', $('#editMobile').val());
+        formData.append('dateOfBirth', $('#editDOB').val());
+
+        var file = $('#editPhoto')[0].files[0];
+        if (file) {
+            formData.append('photo', file);
+        }
 
         // Send AJAX request to update employee
         $.ajax({
             url: '/api/employee/' + employeeId,
             type: 'PUT',
-            data: JSON.stringify(employeeData),
-            contentType: 'application/json',
+            data: formData,
+            processData: false, // Important: Do not process the data
+            contentType: false, // Important: Set contentType to false to handle file upload
             success: function () {
                 alert('Employee updated successfully.');
                 $('#editEmployeeModal').modal('hide'); // Close the modal

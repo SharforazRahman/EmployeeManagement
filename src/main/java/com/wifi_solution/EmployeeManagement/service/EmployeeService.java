@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class EmployeeService {
@@ -34,34 +35,34 @@ public class EmployeeService {
         return employeeRepository.findById(id).orElseThrow();
     }
 
-    public Employee saveEmployee(Employee employee) {
+    public Employee saveEmployee(Employee employee, String firstName, String lastName, String email, String mobile, String dateOfBirth, MultipartFile photo) {
+        employee.setFullName(firstName + " " + lastName);
+        employee.setEmail(email);
+        employee.setMobile(mobile);
+        employee.setDateOfBirth(LocalDate.parse(dateOfBirth));
+        savePhoto(photo, employee);
         return employeeRepository.save(employee);
     }
 
     public void deleteEmployee(Long id) {
         // Delete the profile picture from Cloudinary if it exists
-        String profilePictureUrl = employeeRepository.findById(id).get().getPhoto();
-        if (profilePictureUrl != null && !profilePictureUrl.isEmpty()) {
-            String publicId = profilePictureUrl.split("/")[7].split("\\.")[0];
-            try {
-                deleteFile(publicId);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        deletePhoto(id);
         employeeRepository.deleteById(id);
     }
+
 
     public Page<Employee> searchEmployees(String searchTerm, Pageable pageable) {
         return employeeRepository.findByFullNameContainingOrEmailContaining(searchTerm, searchTerm, pageable);
     }
 
-    public Employee updateEmployee(Long id, Employee employeeDetails) {
+    public Employee updateEmployee(Long id, String fullName, String email, String mobile, String dateOfBirth, MultipartFile photo) {
         Employee employee = employeeRepository.findById(id).orElseThrow();
-        employee.setFullName(employeeDetails.getFullName());
-        employee.setEmail(employeeDetails.getEmail());
-        employee.setMobile(employeeDetails.getMobile());
-        employee.setDateOfBirth(employeeDetails.getDateOfBirth());
+        employee.setFullName(fullName);
+        employee.setEmail(email);
+        employee.setMobile(mobile);
+        employee.setDateOfBirth(LocalDate.parse(dateOfBirth));
+        savePhoto(photo, employee);
+        if (photo != null && !photo.isEmpty()) deletePhoto(id);
         return employeeRepository.save(employee);
     }
 
@@ -90,10 +91,38 @@ public class EmployeeService {
     }
 
     public Map uploadFile(MultipartFile photo) throws IOException {
-        return cloudinary.uploader().upload(photo.getBytes(), ObjectUtils.emptyMap());
+        String fileName = UUID.randomUUID().toString();
+        return cloudinary.uploader().upload(photo.getBytes(), ObjectUtils.asMap("public_id", fileName));
     }
 
     public Map deleteFile(String publicId) throws IOException {
         return cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+    }
+
+    private void deletePhoto(long id) {
+        String profilePictureUrl = employeeRepository.findById(id).get().getPhoto();
+        if (profilePictureUrl != null && !profilePictureUrl.isEmpty()) {
+            String publicId = profilePictureUrl.split("/")[7].split("\\.")[0];
+            try {
+                deleteFile(publicId);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void savePhoto(MultipartFile photo, Employee employee) {
+        if (photo != null && !photo.isEmpty()) {
+            // Upload the profile picture to Cloudinary
+            try {
+                System.out.println(photo.getSize() + " " + photo.getBytes());
+                Map uploadResult = uploadFile(photo);
+                String profilePictureUrl = (String) uploadResult.get("url");
+                employee.setPhoto(profilePictureUrl);
+                System.out.println(employee.getPhoto());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }
